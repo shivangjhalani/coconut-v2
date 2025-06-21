@@ -2,7 +2,7 @@
 
 project: coconut
 # save_path: YOUR_PATH_TO_SAVE_THE_MODEL
-save_path: ../checkpoints/gsm_coconut_eval
+save_path: checkpoints
 name: gsm-coconut-eval
 
 only_eval: True
@@ -21,7 +21,7 @@ save_only_improve: False
 uniform_prob: 0.0
 model_id: openai-community/gpt2
 # load_model_path: YOUR_PATH_TO_COCONUT_CHECKPOINT
-load_model_path: ../checkpoints/stage_1_training_ck/checkpoint_5
+load_model_path: checkpoints/stage_1_training_ck/checkpoint_5
 seed: 0
 resume: 15
 bf16: False
