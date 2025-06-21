@@ -34,9 +34,6 @@ import gc
 import argparse
 import functools
 from utils import Config, set_seed
-import time
-import psutil
-import numpy as np
 
 
 def main():
@@ -331,10 +328,6 @@ def main():
                 dynamic_ncols=True,
             )
 
-            # Add to training loop, collect losses per epoch
-            # Remove unused variable that was never used
-            # epoch_losses = []
-
             for step, batch in enumerate(train_dataloader):
 
                 if step == 0 and wandb_run and rank == 0:
@@ -378,29 +371,13 @@ def main():
                     pbar.update(1)
 
                 if wandb_run and rank == 0:
-                    # Existing logging
                     log_dict = {
                         "train/epoch": epoch + 1,
                         "train/step": epoch * len(train_dataloader) + step,
-                        "train/loss": (loss.detach().float() * configs.gradient_accumulation_steps).item(),
+                        "train/loss": loss.detach().float()
+                        * configs.gradient_accumulation_steps,
                     }
-                    
-                    # NEW: Track loss spikes at stage transitions
-                    current_stage = epoch // configs.epochs_per_stage if not (configs.cot or configs.no_cot) else 0
-                    if hasattr(configs, 'prev_stage') and current_stage > configs.prev_stage:
-                        # Stage transition detected
-                        if hasattr(configs, 'prev_epoch_loss'):
-                            loss_spike = log_dict["train/loss"] - configs.prev_epoch_loss
-                            log_dict["train/loss_spike_at_transition"] = loss_spike
-                        configs.prev_stage = current_stage
-                    
-                    # Store loss for next comparison
-                    configs.prev_epoch_loss = log_dict["train/loss"]
-                    
-                    try:
-                        wandb_run.log(log_dict)
-                    except Exception as e:
-                        print(f"Warning: Failed to log to wandb: {e}")
+                    wandb_run.log(log_dict)
 
                 pbar.set_description(
                     f"Training Epoch: {epoch+1}/{configs.num_epochs}, batch {step}/{len(train_dataloader)} "
@@ -443,14 +420,12 @@ def main():
                     total_loss += loss.item() / world_size
 
                 if wandb_run and rank == 0:
-                    try:
-                        log_dict = {
-                            "eval/loss": total_loss / len(valid_loss_dataloader),
-                        }
-                        wandb_run.log(log_dict)
-                        print("eval loss", total_loss / len(valid_loss_dataloader))
-                    except Exception as e:
-                        print(f"Warning: Failed to log eval loss to wandb: {e}")
+
+                    log_dict = {
+                        "eval/loss": total_loss / len(valid_loss_dataloader),
+                    }
+                    wandb_run.log(log_dict)
+                    print("eval loss", total_loss / len(valid_loss_dataloader))
 
         # val generation accuracy
         total_length = len(valid_gen_dataloader)
@@ -463,12 +438,6 @@ def main():
             torch.tensor(0, device=rank),
             torch.tensor(0, device=rank),
         )
-
-        # Add before the generation loop
-        problem_times = []
-
-        # Track reasoning path lengths during evaluation
-        path_lengths = []
 
         with torch.no_grad():
             parallel_model.module.eval()
@@ -489,19 +458,12 @@ def main():
 
                 total += 1
 
-                # NEW: Time each inference
-                start_time = time.time()
-                
                 # synced_gpus=True in FSDP mode, as we need to keep # forward pass the same on each device
                 outputs = parallel_model.module.generate(
                     **batch,
                     max_new_tokens=max_new_tokens,
                     synced_gpus=not configs.only_eval,
                 )
-                
-                # NEW: Record inference time
-                inference_time = time.time() - start_time
-                problem_times.append(inference_time)
 
                 text_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
                 answer_output = text_output.split("#")[-1].replace(",", "").strip()
@@ -509,36 +471,13 @@ def main():
                     ("\n".join(text_output.split("\n")[1:])).split("#")[0].strip()
                 )
 
-                # Track reasoning path lengths during evaluation
-                reasoning_steps = text_output.split('\n')
-                reasoning_steps = [step.strip() for step in reasoning_steps if step.strip()]
-                path_lengths.append(len(reasoning_steps))
-
                 if idx < 5 and rank == 0:
-                    # Existing debug output
-                    print(f"Question {test_idx}: Answer = '{answer}' CoT = '{answer_cot}'")
+                    # print some examples
+                    print(
+                        f"Question {test_idx}: Answer = '{answer}' CoT = '{answer_cot}'"
+                    )
                     print(f"Full output: '{tokenizer.decode(outputs[0])}'")
                     print(f"Extracted Output: '{answer_output}'")
-
-                # NEW: Extract reasoning confidence
-                if configs.coconut and wandb_run and rank == 0:
-                    try:
-                        # Get the probability distribution for each generated token
-                        with torch.no_grad():
-                            input_ids = outputs[0].unsqueeze(0)
-                            model_outputs = parallel_model.module(**{"input_ids": input_ids})
-                            logits = model_outputs.logits[0]  # [seq_len, vocab_size]
-                            
-                            # Calculate confidence as max probability at each step
-                            probs = torch.softmax(logits, dim=-1)
-                            max_probs = torch.max(probs, dim=-1)[0]
-                            
-                            # Log average reasoning confidence
-                            if len(max_probs) > 1:
-                                avg_confidence = max_probs.mean().item()
-                                wandb_run.log({"eval/reasoning_confidence_at_each_step": avg_confidence})
-                    except Exception as e:
-                        print(f"Warning: Failed to log reasoning confidence to wandb: {e}")
 
                 cor += answer_output == answer
                 cor_cot += cot_output == answer_cot
@@ -564,112 +503,7 @@ def main():
         sys.stdout.flush()
 
         if wandb_run:
-            # Existing logging
-            log_dict = {"eval/acc": cor / total, "eval/cot_em": cor_cot / total}
-            
-            # NEW: Track fixed latent steps inefficiency
-            scheduled_stage = (0 if (configs.cot or configs.no_cot) else epoch // configs.epochs_per_stage)
-            if configs.coconut:
-                fixed_latent_steps = scheduled_stage * configs.c_thought
-                log_dict["eval/fixed_latent_steps_used"] = fixed_latent_steps
-            
-            try:
-                wandb_run.log(log_dict)
-            except Exception as e:
-                print(f"Warning: Failed to log evaluation metrics to wandb: {e}")
-
-        # NEW: Log average inference time
-        if wandb_run and rank == 0:
-            try:
-                if len(problem_times) > 0:
-                    avg_inference_time = sum(problem_times) / len(problem_times)
-                    wandb_run.log({"eval/inference_time_per_problem": avg_inference_time})
-                else:
-                    print("Warning: No inference times recorded")
-            except Exception as e:
-                print(f"Warning: Failed to log inference time to wandb: {e}")
-
-        # After evaluation - log reasoning path lengths
-        if wandb_run and rank == 0 and len(path_lengths) > 0:
-            try:
-                wandb_run.log({
-                    "eval/reasoning_path_length_mean": np.mean(path_lengths),
-                    "eval/reasoning_path_length_std": np.std(path_lengths),
-                    "eval/reasoning_path_length_min": np.min(path_lengths),
-                    "eval/reasoning_path_length_max": np.max(path_lengths),
-                })
-            except Exception as e:
-                print(f"Warning: Failed to log reasoning path lengths to wandb: {e}")
-
-        # # Log difficulty-based computation efficiency
-        # if wandb_run and rank == 0:
-        #     for diff in ["easy", "medium", "hard"]:
-        #         if difficulty_stats[diff]["total"] > 0:
-        #             accuracy = difficulty_stats[diff]["correct"] / difficulty_stats[diff]["total"]
-        #             avg_time = difficulty_stats[diff]["time"] / difficulty_stats[diff]["total"]
-        #             efficiency = accuracy / avg_time if avg_time > 0 else 0
-        #             wandb_run.log({
-        #                 f"eval/accuracy_{diff}": accuracy,
-        #                 f"eval/avg_time_{diff}": avg_time,
-        #                 f"eval/computation_efficiency_{diff}": efficiency
-        #             })
-
-        # COMMENTED OUT: Incomplete functions that depend on missing features
-        # These would need proper implementation with access to stage_0_data and full evaluation logic
-        
-        # def evaluate_stage_retention(model, tokenizer, stage_0_data, device, rank):
-        #     """Evaluate retention of stage 0 performance"""
-        #     if len(stage_0_data) == 0:
-        #         return 0.0
-        #     
-        #     correct = 0
-        #     total = 0
-        #     
-        #     with torch.no_grad():
-        #         model.eval()
-        #         for sample in stage_0_data[:50]:  # Test on subset for speed
-        #             # Process sample same as main evaluation
-        #             # ... (similar to existing evaluation code)
-        #             total += 1
-        #             if prediction_correct:  # Your logic here
-        #                 correct += 1
-        #     
-        #     return correct / total if total > 0 else 0.0
-
-        # if not configs.only_eval and epoch > 0:
-        #     current_stage = epoch // configs.epochs_per_stage if not (configs.cot or configs.no_cot) else 0
-        #     if hasattr(configs, 'prev_stage') and current_stage > configs.prev_stage:
-        #         # Stage transition occurred, test retention
-        #         if hasattr(configs, 'stage_0_data'):
-        #             retention_score = evaluate_stage_retention(
-        #                 parallel_model.module, tokenizer, configs.stage_0_data, rank, rank
-        #             )
-        #             if wandb_run and rank == 0:
-        #                 wandb_run.log({f"eval/stage_0_retention_after_stage_{current_stage}": retention_score})
-
-        # def evaluate_consistency(model, dataloader, num_runs=3):
-        #     """Evaluate consistency across multiple runs"""
-        #     all_predictions = []
-        #     
-        #     for run in range(num_runs):
-        #         predictions = []
-        #         # ... run evaluation and collect predictions ...
-        #         all_predictions.append(predictions)
-        #     
-        #     # Calculate consistency
-        #     consistent_predictions = 0
-        #     total_predictions = len(all_predictions[0])
-        #     
-        #     for i in range(total_predictions):
-        #         if all(pred[i] == all_predictions[0][i] for pred in all_predictions):
-        #             consistent_predictions += 1
-        #     
-        #     return consistent_predictions / total_predictions
-
-        # if not configs.only_eval and epoch % 5 == 0:  # Every 5 epochs
-        #     consistency_score = evaluate_consistency(parallel_model.module, valid_gen_dataloader)
-        #     if wandb_run and rank == 0:
-        #         wandb_run.log({"eval/consistency_across_runs": consistency_score})
+            wandb_run.log({"eval/acc": cor / total, "eval/cot_em": cor_cot / total})
 
         if configs.only_eval:
             break
