@@ -22,7 +22,7 @@ model_id: openai-community/gpt2
 load_model_path: YOUR_PATH_TO_COCONUT_CHECKPOINT
 seed: 0
 resume: 40
-bf16: False
+bf16: True
 train_path: data/prontoqa_train.json
 val_path: data/prontoqa_test.json
 reset_optimizer: True
