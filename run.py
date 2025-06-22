@@ -7,6 +7,7 @@ import torch.optim as optim
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import wandb
+import time
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
@@ -35,6 +36,48 @@ import argparse
 import functools
 from utils import Config, set_seed
 
+def estimate_model_flops(model, input_ids, vocab_size):
+    """
+    Estimate FLOPs for a transformer model forward pass.
+    This is a rough approximation based on model parameters and sequence length.
+    """
+    batch_size, seq_length = input_ids.shape
+    
+    # Count total parameters (excluding embeddings to avoid double counting)
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    # Rough FLOP estimation for transformer forward pass:
+    # - Self-attention: 4 * batch_size * seq_length^2 * hidden_size
+    # - Feed-forward: 8 * batch_size * seq_length * hidden_size * ffn_size (approx 4*hidden_size)
+    # - Linear projections and other ops: ~2 * total_params * batch_size * seq_length
+    
+    if hasattr(model, 'module') and hasattr(model.module, 'config'):
+        config = model.module.config
+    elif hasattr(model, 'config'):
+        config = model.config
+    else:
+        config = None
+
+    if config:
+        hidden_size = getattr(config, 'hidden_size', getattr(config, 'n_embd', 768))
+        num_layers = getattr(config, 'num_hidden_layers', getattr(config, 'n_layer', 12))
+    else:
+        # Fallback estimates
+        hidden_size = 768
+        num_layers = 12
+    
+    # Self-attention FLOPs
+    attn_flops = 4 * batch_size * seq_length * seq_length * hidden_size * num_layers
+    
+    # Feed-forward FLOPs (assuming ffn_size = 4 * hidden_size)
+    ffn_flops = 8 * batch_size * seq_length * hidden_size * hidden_size * num_layers
+    
+    # Output projection FLOPs
+    output_flops = 2 * batch_size * seq_length * hidden_size * vocab_size
+    
+    total_flops = attn_flops + ffn_flops + output_flops
+    
+    return total_flops
 
 def main():
 
@@ -328,6 +371,10 @@ def main():
                 dynamic_ncols=True,
             )
 
+            # Start timing for the epoch
+            epoch_start_time = time.time()
+            epoch_total_flops = 0
+
             for step, batch in enumerate(train_dataloader):
 
                 if step == 0 and wandb_run and rank == 0:
@@ -360,6 +407,15 @@ def main():
 
                 outputs = parallel_model(**batch)
 
+                # Estimate FLOPs for this batch
+                if step == 0:  # Only compute on first batch to avoid overhead
+                    batch_flops = estimate_model_flops(
+                        parallel_model.module.base_causallm if hasattr(parallel_model.module, 'base_causallm') else parallel_model.module,
+                        batch["input_ids"],
+                        len(tokenizer)
+                    )
+                    epoch_total_flops += batch_flops
+
                 loss = outputs.loss / configs.gradient_accumulation_steps
                 loss.backward()
 
@@ -377,6 +433,9 @@ def main():
                         "train/loss": loss.detach().float()
                         * configs.gradient_accumulation_steps,
                     }
+                    # Add FLOP estimate for first batch
+                    if step == 0 and epoch_total_flops > 0:
+                        log_dict["train/batch_flops_estimate"] = batch_flops
                     wandb_run.log(log_dict)
 
                 pbar.set_description(
@@ -384,6 +443,21 @@ def main():
                     f"completed (loss: {round(float(loss.detach().float() * configs.gradient_accumulation_steps), 4)}"
                 )
             pbar.close()
+            
+            # End timing for the epoch and log timing metrics
+            epoch_end_time = time.time()
+            epoch_duration = epoch_end_time - epoch_start_time
+            
+            if wandb_run and rank == 0:
+                timing_log_dict = {
+                    "train/epoch_duration_seconds": epoch_duration,
+                    "train/samples_per_second": len(train_dataloader) * configs.batch_size_training / epoch_duration,
+                }
+                if epoch_total_flops > 0:
+                    timing_log_dict["train/epoch_flops_estimate"] = epoch_total_flops * len(train_dataloader)
+                    timing_log_dict["train/flops_per_second"] = timing_log_dict["train/epoch_flops_estimate"] / epoch_duration
+                wandb_run.log(timing_log_dict)
+            
             dist.barrier()
 
             if (
@@ -439,6 +513,11 @@ def main():
             torch.tensor(0, device=rank),
         )
 
+        # Initialize inference timing and FLOP tracking
+        total_inference_time = 0
+        total_inference_flops = 0
+        inference_sample_count = 0
+        
         with torch.no_grad():
             parallel_model.module.eval()
             for idx, batch in enumerate(valid_gen_dataloader):
@@ -458,12 +537,36 @@ def main():
 
                 total += 1
 
+                # Start timing for this inference sample
+                sample_start_time = time.time()
+
                 # synced_gpus=True in FSDP mode, as we need to keep # forward pass the same on each device
                 outputs = parallel_model.module.generate(
                     **batch,
                     max_new_tokens=max_new_tokens,
                     synced_gpus=not configs.only_eval,
                 )
+
+                # End timing for this inference sample
+                sample_end_time = time.time()
+                sample_inference_time = sample_end_time - sample_start_time
+                total_inference_time += sample_inference_time
+                inference_sample_count += 1
+
+                # Estimate FLOPs for this inference sample (rough approximation)
+                if idx < 10:  # Only compute for first few samples to avoid overhead
+                    input_seq_len = batch["input_ids"].shape[1]
+                    output_seq_len = max_new_tokens
+                    total_seq_len = input_seq_len + output_seq_len
+                    
+                    # Create a dummy tensor for FLOP estimation
+                    dummy_input = torch.zeros((1, total_seq_len), dtype=torch.long)
+                    sample_flops = estimate_model_flops(
+                        parallel_model.module.base_causallm if hasattr(parallel_model.module, 'base_causallm') else parallel_model.module,
+                        dummy_input,
+                        len(tokenizer)
+                    )
+                    total_inference_flops += sample_flops
 
                 text_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
                 answer_output = text_output.split("#")[-1].replace(",", "").strip()
@@ -503,7 +606,28 @@ def main():
         sys.stdout.flush()
 
         if wandb_run:
-            wandb_run.log({"eval/acc": cor / total, "eval/cot_em": cor_cot / total})
+            inference_log_dict = {
+                "eval/acc": cor / total, 
+                "eval/cot_em": cor_cot / total
+            }
+            
+            # Add inference timing metrics
+            if inference_sample_count > 0:
+                avg_inference_time_per_sample = total_inference_time / inference_sample_count
+                inference_log_dict["eval/avg_inference_time_per_sample"] = avg_inference_time_per_sample
+                inference_log_dict["eval/total_inference_time"] = total_inference_time
+                inference_log_dict["eval/inference_samples_per_second"] = inference_sample_count / total_inference_time if total_inference_time > 0 else 0
+                
+                # Add FLOP metrics (only if we computed them for some samples)
+                if total_inference_flops > 0:
+                    samples_with_flops = min(10, inference_sample_count)  # We only computed for first 10 samples
+                    avg_flops_per_sample = total_inference_flops / samples_with_flops
+                    inference_log_dict["eval/avg_flops_per_sample"] = avg_flops_per_sample
+                    inference_log_dict["eval/estimated_total_inference_flops"] = avg_flops_per_sample * inference_sample_count
+                    if avg_inference_time_per_sample > 0:
+                        inference_log_dict["eval/flops_per_second_inference"] = avg_flops_per_sample / avg_inference_time_per_sample
+            
+            wandb_run.log(inference_log_dict)
 
         if configs.only_eval:
             break
