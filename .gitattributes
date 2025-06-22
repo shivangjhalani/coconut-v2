@@ -1,1 +1,2 @@
 checkpoints/** filter=lfs diff=lfs merge=lfs -text
+run-8d8665bf.wandb filter=lfs diff=lfs merge=lfs -text
