@@ -19,9 +19,9 @@ pad_latent_to_max: True
 save_only_improve: False
 uniform_prob: 0.0
 model_id: openai-community/gpt2
-load_model_path: checkpoints/stage_1_training_ck/checkpoint_5
+load_model_path: None
 seed: 0
-resume: 3
+resume: 0
 bf16: True
 train_path: data/gsm_train.json
 val_path: data/gsm_valid.json
