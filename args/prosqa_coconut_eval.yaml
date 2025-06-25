@@ -19,10 +19,10 @@ pad_latent_to_max: True
 save_only_improve: False
 uniform_prob: 0.0
 model_id: openai-community/gpt2
-load_model_path: YOUR_PATH_TO_COCONUT_CHECKPOINT
+load_model_path: checkpoints/gsm-coconut/checkpoint_2
 seed: 0
 resume: 40
-bf16: True
+bf16: False
 train_path: data/prosqa_train.json
 val_path: data/prosqa_test.json
 reset_optimizer: True
