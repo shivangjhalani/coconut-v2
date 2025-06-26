@@ -123,6 +123,11 @@ def main():
         get_question_latent_dataset = ds_mm.get_question_latent_dataset_mm
         get_cot_latent_dataset = ds_mm.get_cot_latent_dataset_mm
         CollatorClass = MyCollatorMM
+
+        # Expose an alias with the same signature as the text version so the
+        # lower part of the training loop (written for text-only) keeps working.
+        def get_dataset(path, tok, max_size=100000000):
+            return ds_mm.get_dataset_mm(path, tok, configs.image_dir, max_size=max_size)
     else:
         # Text-only fallback (original behaviour)
         from dataset import (
@@ -144,6 +149,9 @@ def main():
         get_question_latent_dataset = q_lat
         get_cot_latent_dataset = cot_lat
         CollatorClass = CollatorTxt
+
+        # Alias needed later
+        get_dataset = get_dataset_txt
 
     latent_id = tokenizer.convert_tokens_to_ids("<|latent|>")
     start_id = tokenizer.convert_tokens_to_ids("<|start-latent|>")

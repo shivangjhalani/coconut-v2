@@ -1,0 +1,38 @@
+project: coconut
+save_path: YOUR_PATH_TO_SAVE_THE_MODEL
+name: scienceqa-cot
+
+only_eval: False
+
+# training mode flags
+coconut: False
+cot: True
+no_thoughts: False
+no_cot: False
+
+# latent scheduling (not used in pure CoT)
+c_thought: 0
+epochs_per_stage: 1
+max_latent_stage: 0
+pad_latent_to_max: True
+
+save_only_improve: True
+uniform_prob: 0.0
+
+# model & data
+model_id: OpenGVLab/InternVL3-1B-Pretrained
+load_model_path: None
+multimodal: True
+image_dir: data/images/scienceqa
+seed: 0
+resume: 0
+bf16: True
+train_path: data/scienceqa_coconut.json
+val_path: data/scienceqa_coconut.json
+reset_optimizer: False
+batch_size_training: 8
+debug: False
+gradient_accumulation_steps: 1
+num_epochs: 10
+lr: !!float "5e-5"
+weight_decay: 0.01 
