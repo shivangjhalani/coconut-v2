@@ -4,7 +4,7 @@
 import torch
 import torch.distributed
 import torch.optim as optim
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, AutoModelForImageTextToText
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, AutoModelForImageTextToText, AutoModel
 
 import wandb
 
@@ -112,9 +112,19 @@ def main():
         tokenizer.add_tokens([tok for tok in special if tok not in tokenizer.get_vocab()])
         tokenizer.add_tokens(["<|start-latent|>", "<|end-latent|>", "<|latent|>"])
 
-        model = AutoModelForImageTextToText.from_pretrained(
-            configs.model_id, torch_dtype=torch.bfloat16 if configs.bf16 else None, trust_remote_code=True
-        )
+        try:
+            model = AutoModelForImageTextToText.from_pretrained(
+                configs.model_id, torch_dtype=torch.bfloat16 if configs.bf16 else None, trust_remote_code=True
+            )
+        except ValueError:
+            # Some InternVL checkpoints implement a custom class not yet routed to
+            # AutoModelForImageTextToText.  Fall back to generic AutoModel which is
+            # properly registered via `trust_remote_code=True`.
+            model = AutoModel.from_pretrained(
+                configs.model_id,
+                torch_dtype=torch.bfloat16 if configs.bf16 else None,
+                trust_remote_code=True,
+            )
 
         # dataset loading
         base_dataset_train = ds_mm.get_dataset_mm(configs.train_path, tokenizer, configs.image_dir)
