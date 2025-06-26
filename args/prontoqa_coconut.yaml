@@ -18,10 +18,6 @@ pad_latent_to_max: True
 
 save_only_improve: False
 uniform_prob: 0.0
-
-# Removal smoothing parameters for stabilizing training
-removal_smoothing_lambda: 4.0    # λ parameter controlling smoothing strength (higher = less smoothing)
-removal_smoothing_max_offset: 2  # Maximum offset to apply (typically 1-2)
 model_id: openai-community/gpt2
 load_model_path: None
 seed: 0

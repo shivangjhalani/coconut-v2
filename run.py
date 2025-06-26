@@ -5,8 +5,6 @@ import torch
 import torch.distributed
 import torch.optim as optim
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import random
-import math
 
 import wandb
 
@@ -246,42 +244,6 @@ def main():
         scheduled_stage = (
             0 if (configs.cot or configs.no_cot) else epoch // configs.epochs_per_stage
         )
-        
-        # Implement removal smoothing: add random offset with exponential probability
-        # P(o) ∝ exp(-λo) where λ controls the smoothing strength
-        if hasattr(configs, 'removal_smoothing_lambda') and configs.removal_smoothing_lambda > 0:
-            # Sample offset from exponential distribution P(o) ∝ exp(-λo)
-            # We use geometric distribution for discrete case
-            lam = configs.removal_smoothing_lambda
-            max_offset = getattr(configs, 'removal_smoothing_max_offset', 2)
-            
-            # Calculate probabilities for offsets 0, 1, 2, ..., max_offset
-            probs = []
-            total_prob = 0
-            for i in range(max_offset + 1):
-                prob = math.exp(-lam * i)
-                probs.append(prob)
-                total_prob += prob
-            
-            # Normalize probabilities
-            probs = [p / total_prob for p in probs]
-            
-            # Sample offset based on these probabilities
-            rand_val = random.random()
-            cumulative_prob = 0
-            offset = 0
-            for i, prob in enumerate(probs):
-                cumulative_prob += prob
-                if rand_val <= cumulative_prob:
-                    offset = i
-                    break
-            
-            scheduled_stage_train = scheduled_stage + offset
-            
-            if rank == 0 and offset > 0:
-                print(f"Removal smoothing: using stage {scheduled_stage_train} instead of {scheduled_stage} (offset: {offset})")
-        else:
-            scheduled_stage_train = scheduled_stage
         dataset_gen_val = get_question_latent_dataset(
             scheduled_stage,
             base_dataset_valid,
@@ -304,7 +266,7 @@ def main():
         if not configs.only_eval:
 
             dataset_train = get_cot_latent_dataset(
-                scheduled_stage_train,
+                scheduled_stage,
                 base_dataset_train,
                 configs,
                 start_id,
@@ -328,7 +290,7 @@ def main():
             # so we have shuffled the dataset when it's constructed (at every epoch).
 
             dataset_loss_val = get_cot_latent_dataset(
-                scheduled_stage_train,
+                scheduled_stage,
                 base_dataset_valid,
                 configs,
                 start_id,
