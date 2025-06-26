@@ -4,7 +4,7 @@
 import torch
 import torch.distributed
 import torch.optim as optim
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor, AutoModelForImageTextToText
 
 import wandb
 
@@ -17,12 +17,7 @@ from transformers.models.llama.modeling_llama import LlamaDecoderLayer
 from transformers.models.gpt2.modeling_gpt2 import GPT2Block
 
 from coconut import Coconut
-from dataset import (
-    get_dataset,
-    get_question_latent_dataset,
-    get_cot_latent_dataset,
-    MyCollator,
-)
+# dataset-specific functions will be imported lazily depending on configs.multimodal
 
 from tqdm import tqdm
 from copy import copy
@@ -34,6 +29,10 @@ import gc
 import argparse
 import functools
 from utils import Config, set_seed
+
+import multimodal.dataset_mm as ds_mm
+from multimodal.collator_mm import MyCollatorMM
+from multimodal.transforms import build_transform  # just to ensure package import
 
 
 def main():
@@ -100,12 +99,52 @@ def main():
             f"Loading from {configs.load_model_path} and skip the first {configs.resume} epochs"
         )
 
-    model = AutoModelForCausalLM.from_pretrained(configs.model_id)
-    tokenizer = AutoTokenizer.from_pretrained(configs.model_id)
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.add_tokens("<|start-latent|>")
-    tokenizer.add_tokens("<|end-latent|>")
-    tokenizer.add_tokens("<|latent|>")
+    if hasattr(configs, "multimodal") and configs.multimodal:
+        # Multimodal path -----------------------------------------------------------------
+        processor = AutoProcessor.from_pretrained(configs.model_id, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(configs.model_id, trust_remote_code=True)
+        tokenizer.pad_token = tokenizer.eos_token
+
+        configs.tokenizer = tokenizer  # inject reference for dataset functions
+
+        # ensure latent & image tokens exist
+        special = ["<image>", "</image>"]
+        tokenizer.add_tokens([tok for tok in special if tok not in tokenizer.get_vocab()])
+        tokenizer.add_tokens(["<|start-latent|>", "<|end-latent|>", "<|latent|>"])
+
+        model = AutoModelForImageTextToText.from_pretrained(
+            configs.model_id, torch_dtype=torch.bfloat16 if configs.bf16 else None, trust_remote_code=True
+        )
+
+        # dataset loading
+        base_dataset_train = ds_mm.get_dataset_mm(configs.train_path, tokenizer, configs.image_dir)
+        base_dataset_valid = ds_mm.get_dataset_mm(configs.val_path, tokenizer, configs.image_dir)
+
+        get_question_latent_dataset = ds_mm.get_question_latent_dataset_mm
+        get_cot_latent_dataset = ds_mm.get_cot_latent_dataset_mm
+        CollatorClass = MyCollatorMM
+    else:
+        # Text-only fallback (original behaviour)
+        from dataset import (
+            get_dataset as get_dataset_txt,
+            get_question_latent_dataset as q_lat,
+            get_cot_latent_dataset as cot_lat,
+            MyCollator as CollatorTxt,
+        )
+        tokenizer = AutoTokenizer.from_pretrained(configs.model_id)
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.add_tokens("<|start-latent|>")
+        tokenizer.add_tokens("<|end-latent|>")
+        tokenizer.add_tokens("<|latent|>")
+        model = AutoModelForCausalLM.from_pretrained(configs.model_id)
+
+        base_dataset_train = get_dataset_txt(configs.train_path, tokenizer)
+        base_dataset_valid = get_dataset_txt(configs.val_path, tokenizer)
+
+        get_question_latent_dataset = q_lat
+        get_cot_latent_dataset = cot_lat
+        CollatorClass = CollatorTxt
+
     latent_id = tokenizer.convert_tokens_to_ids("<|latent|>")
     start_id = tokenizer.convert_tokens_to_ids("<|start-latent|>")
     end_id = tokenizer.convert_tokens_to_ids("<|end-latent|>")
@@ -237,7 +276,7 @@ def main():
 
     best_acc = 0
 
-    collator = MyCollator(tokenizer, latent_id=latent_id, label_pad_token_id=-100)
+    collator = CollatorClass(tokenizer, latent_id=latent_id, label_pad_token_id=-100)
 
     for epoch in range(configs.resume, configs.num_epochs):
 

@@ -38,6 +38,9 @@ class Coconut(nn.Module):
 
     def forward(self, input_ids, attention_mask, labels, position_ids, **kwargs):
 
+        pixel_values = kwargs.get("pixel_values", None)
+        num_patches_list = kwargs.get("num_patches_list", None)
+
         logits = []
 
         latent_indices = (
@@ -74,6 +77,8 @@ class Coconut(nn.Module):
                     position_ids=position_ids[
                         :, next_compute_range[0] : next_compute_range[1]
                     ],
+                    pixel_values=pixel_values,
+                    num_patches_list=num_patches_list,
                     output_hidden_states=True,
                 )
                 hidden_states_offset = 0
@@ -97,6 +102,8 @@ class Coconut(nn.Module):
                         :, next_compute_range[0] : next_compute_range[1]
                     ],
                     past_key_values=past_key_values,
+                    pixel_values=pixel_values,
+                    num_patches_list=num_patches_list,
                     output_hidden_states=True,
                 )
 
@@ -164,6 +171,8 @@ class Coconut(nn.Module):
             ],
             attention_mask=attention_mask[:, : next_compute_range[1]],
             position_ids=position_ids[:, next_compute_range[0] : next_compute_range[1]],
+            pixel_values=pixel_values,
+            num_patches_list=num_patches_list,
             past_key_values=(
                 [
                     (
@@ -222,6 +231,7 @@ class Coconut(nn.Module):
             torch.arange(
                 0, input_ids.shape[1], dtype=torch.long, device=input_ids.device
             ).reshape(1, -1),
+            **kwargs,
         )
         inputs_embeds = outputs.inputs_embeds
 
@@ -235,7 +245,7 @@ class Coconut(nn.Module):
 
         # get other tokens
         for _ in range(max_new_tokens - 1):
-            outputs = self.base_causallm(inputs_embeds=new_inputs_embeds)
+            outputs = self.base_causallm(inputs_embeds=new_inputs_embeds, **kwargs)
             self.gen_forward_cnt += 1
             next_token = torch.argmax(outputs.logits[0, -1]).item()
             if next_token == self.eos_token_id:
@@ -252,7 +262,7 @@ class Coconut(nn.Module):
                 self.gen_forward_cnt < max_new_tokens + MAX_N_LATENT
             ):  # leave some room for latent tokens
                 self.gen_forward_cnt += 1
-                _ = self.base_causallm(inputs_embeds=new_inputs_embeds)
+                _ = self.base_causallm(inputs_embeds=new_inputs_embeds, **kwargs)
 
         if output_embedding:
             # for analysis purpose

@@ -1,7 +1,7 @@
 # need 4 gpus
 
 project: coconut
-save_path: checkpoints
+save_path: YOUR_PATH_TO_SAVE_THE_MODEL
 name: prontoqa-coconut
 
 only_eval: False
@@ -22,7 +22,7 @@ model_id: openai-community/gpt2
 load_model_path: None
 seed: 0
 resume: 0
-bf16: True
+bf16: False
 train_path: data/prontoqa_train.json
 val_path: data/prontoqa_valid.json
 reset_optimizer: True

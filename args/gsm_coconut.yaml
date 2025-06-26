@@ -1,7 +1,7 @@
 # need 4 gpus
 
 project: coconut
-save_path: checkpoints
+save_path: YOUR_PATH_TO_SAVE_THE_MODEL
 name: gsm-coconut
 
 only_eval: False
@@ -11,7 +11,7 @@ cot: False
 no_thoughts: False
 no_cot: False
 
-c_thought: 1
+c_thought: 2
 epochs_per_stage: 3
 max_latent_stage: 3
 pad_latent_to_max: True
@@ -19,9 +19,9 @@ pad_latent_to_max: True
 save_only_improve: False
 uniform_prob: 0.0
 model_id: openai-community/gpt2
-load_model_path: /home/ccbd/aaloogobi/coconut-v2/checkpoints/gsm-cot/checkpoint_19
+load_model_path: YOUR_PATH_TO_COT_CHECKPOINT
 seed: 0
-resume: 0
+resume: 3
 bf16: False
 train_path: data/gsm_train.json
 val_path: data/gsm_valid.json
