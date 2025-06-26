@@ -12,6 +12,11 @@ python preprocessing/scienceqa_to_coconut.py \
        --output data/scienceqa_coconut.json \
        --image-dir data/images/scienceqa
 
+python preprocessing/cache_mm_dataset.py \
+       data/scienceqa_train.json \
+       data/images \
+       data/cache/scienceqa_train   # any output dir you like
+^ loads the InternVL tokenizer, calls get_dataset_mm, performs the slow tiling/tokenising once, then saves an Arrow dataset
 
 ---
 

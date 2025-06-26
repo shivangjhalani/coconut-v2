@@ -30,25 +30,34 @@ def get_dataset_mm(path, tokenizer, img_root: str, max_size: int = 1000000000, i
         return load_from_disk(path)
 
     def tokenize_sample(sample):
-        # text tokenisation identical to original code
-        question_tokenized = tokenizer.encode(sample["question"] + "\n", add_special_tokens=True)
-        steps_tokenized = [tokenizer.encode(s + "\n", add_special_tokens=False) for s in sample["steps"]]
-        answer_tokenized = tokenizer.encode("### " + sample["answer"], add_special_tokens=False) + [
-            tokenizer.eos_token_id
-        ]
+        """Tokenize text and load image. If image fails to decode, mark skip."""
 
-        # Vision processing
-        img_path = f"{img_root}/{sample['image']}"
-        pixel_values, n_tiles = load_image(img_path, input_size=image_size)
+        try:
+            question_tokenized = tokenizer.encode(sample["question"] + "\n", add_special_tokens=True)
+            steps_tokenized = [
+                tokenizer.encode(s + "\n", add_special_tokens=False) for s in sample["steps"]
+            ]
+            answer_tokenized = tokenizer.encode("### " + sample["answer"], add_special_tokens=False) + [
+                tokenizer.eos_token_id
+            ]
 
-        return {
-            "question_tokenized": question_tokenized,
-            "steps_tokenized": steps_tokenized,
-            "answer_tokenized": answer_tokenized,
-            "pixel_values": pixel_values,  # keep tensor
-            "num_patches": n_tiles,
-            "idx": sample["idx"],
-        }
+            # Vision processing
+            img_path = f"{img_root}/{sample['image']}"
+            pixel_values, n_tiles = load_image(img_path, input_size=image_size)
+
+            return {
+                "question_tokenized": question_tokenized,
+                "steps_tokenized": steps_tokenized,
+                "answer_tokenized": answer_tokenized,
+                "pixel_values": pixel_values,
+                "num_patches": n_tiles,
+                "idx": sample["idx"],
+                "_skip": False,
+            }
+
+        except Exception:
+            # Corrupted or missing image → drop later
+            return {"_skip": True}
 
     data = json.load(open(path))[:max_size]
     data = [{**d, "idx": idx} for idx, d in enumerate(data)]
@@ -56,7 +65,7 @@ def get_dataset_mm(path, tokenizer, img_root: str, max_size: int = 1000000000, i
     keys = data[0].keys()
     dataset = Dataset.from_dict({k: [d[k] for d in data] for k in keys})
 
-    # Map in a distributed-aware fashion
+    # Map with multiprocessing; any record with _skip==True will be removed later
     if torch.cuda.device_count() > 1:
         if dist.get_rank() == 0:
             processed_dataset = [
@@ -68,6 +77,9 @@ def get_dataset_mm(path, tokenizer, img_root: str, max_size: int = 1000000000, i
         dataset = processed_dataset[0]
     else:
         dataset = dataset.map(tokenize_sample, remove_columns=list(dataset.features), num_proc=8)
+
+    # drop bad records
+    dataset = dataset.filter(lambda example: not example["_skip"], num_proc=8)
 
     return dataset
 
