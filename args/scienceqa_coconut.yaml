@@ -1,5 +1,5 @@
 project: coconut
-save_path: YOUR_PATH_TO_SAVE_THE_MODEL
+save_path: checkpoints
 name: scienceqa-coconut
 
 only_eval: False
@@ -21,7 +21,7 @@ model_id: OpenGVLab/InternVL3-1B-Pretrained
 # path to *CoT* checkpoint produced by scienceqa-cot run.
 load_model_path: YOUR_PATH_TO_COT_CHECKPOINT
 multimodal: True
-image_dir: data/images/
+image_dir: data
 seed: 0
 resume: 3
 bf16: False

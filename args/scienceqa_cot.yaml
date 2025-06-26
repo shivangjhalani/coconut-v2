@@ -1,5 +1,5 @@
 project: coconut
-save_path: YOUR_PATH_TO_SAVE_THE_MODEL
+save_path: checkpoints
 name: scienceqa-cot
 
 only_eval: False
@@ -23,10 +23,10 @@ uniform_prob: 0.0
 model_id: OpenGVLab/InternVL3-1B-Pretrained
 load_model_path: None
 multimodal: True
-image_dir: data/images/
+image_dir: data
 seed: 0
 resume: 0
-bf16: False
+bf16: True
 train_path: data/scienceqa_train.json
 val_path: data/scienceqa_valid.json
 reset_optimizer: False
