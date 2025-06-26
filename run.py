@@ -300,6 +300,7 @@ def main():
             image_root=configs.image_dir,
             latent_id=latent_id,
             label_pad_token_id=-100,
+            include_num_patches=configs.coconut,
         )
     else:
         collator = CollatorClass(tokenizer, latent_id=latent_id, label_pad_token_id=-100)

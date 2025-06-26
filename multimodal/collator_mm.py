@@ -20,6 +20,7 @@ class MyCollatorMM(MyCollator):
         *,
         image_root: str,
         image_size: int = 448,
+        include_num_patches: bool = False,
         latent_id: Optional[int] = None,
         label_pad_token_id: Optional[int] = -100,
     ) -> None:
@@ -31,6 +32,7 @@ class MyCollatorMM(MyCollator):
 
         self.image_root = image_root
         self.image_size = image_size
+        self.include_num_patches = include_num_patches
 
     def _prepare_vision(self, feature):
         """Return (pixel_values, n_tiles) for a single feature, computing them if necessary."""
@@ -65,5 +67,6 @@ class MyCollatorMM(MyCollator):
 
         # Concatenate vision tensors along batch dimension (N_total, 3, H, W)
         batch["pixel_values"] = torch.cat(pixel_stacks, dim=0)
-        batch["num_patches_list"] = torch.tensor(num_patches, dtype=torch.int32)
+        if self.include_num_patches:
+            batch["num_patches_list"] = torch.tensor(num_patches, dtype=torch.int32)
         return batch 
