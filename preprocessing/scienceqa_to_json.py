@@ -5,6 +5,7 @@ import base64
 import json
 
 import pandas as pd  # type: ignore
+import numpy as np  # type: ignore
 
 
 def parquet_to_json(parquet_path: str, output_path: Optional[str] = None):
@@ -21,6 +22,12 @@ def parquet_to_json(parquet_path: str, output_path: Optional[str] = None):
     def _encode(obj):
         if isinstance(obj, (bytes, bytearray)):
             return base64.b64encode(obj).decode("ascii")
+        if isinstance(obj, np.ndarray):
+            # Convert arrays to (nested) Python lists then encode elements recursively
+            return _encode(obj.tolist())
+        if isinstance(obj, np.generic):
+            # NumPy scalar → Python scalar
+            return obj.item()
         if isinstance(obj, dict):
             return {k: _encode(v) for k, v in obj.items()}
         if isinstance(obj, list):
