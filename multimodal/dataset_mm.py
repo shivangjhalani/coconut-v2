@@ -136,7 +136,7 @@ def get_question_latent_dataset_mm(
     def process(sample):
         return _convert_instance_to_features(sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker)
 
-    return base_dataset_valid.map(process, remove_columns=list(base_dataset_valid.features), num_proc=32)
+    return base_dataset_valid.map(process, remove_columns=list(base_dataset_valid.features), num_proc=2)
 
 
 def get_cot_latent_dataset_mm(
@@ -155,7 +155,7 @@ def get_cot_latent_dataset_mm(
     def process(sample):
         return _convert_instance_to_features(sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker)
 
-    processed = base_dataset.map(process, remove_columns=list(base_dataset.features), num_proc=32)
+    processed = base_dataset.map(process, remove_columns=list(base_dataset.features), num_proc=2)
     if shuffle:
         processed = processed.shuffle(seed=configs.seed)
     return processed 
