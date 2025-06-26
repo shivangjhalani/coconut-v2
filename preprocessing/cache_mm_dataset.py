@@ -1,5 +1,10 @@
 import argparse
 import os
+import sys
+
+# Add repo root to sys.path so that `multimodal` and other project modules resolve
+sys.path.append(os.path.abspath(os.path.join(__file__, os.pardir, os.pardir)))
+
 from datasets import disable_caching
 from transformers import AutoTokenizer
 
