@@ -23,7 +23,7 @@ def get_dataset_mm(
     img_root: str,
     max_size: int = 1000000000,
     image_size: int = 448,
-    num_proc: int = 32,
+    num_proc: int = 1,
  ):
     """Return a multimodal HF Dataset, building it if needed.
 
@@ -51,16 +51,12 @@ def get_dataset_mm(
                 tokenizer.eos_token_id
             ]
 
-            # Vision processing
-            img_path = f"{img_root}/{sample['image']}"
-            pixel_values, n_tiles = load_image(img_path, input_size=image_size)
-
+            # Keep image filename – actual loading happens later to avoid huge Arrow tables
             return {
                 "question_tokenized": question_tokenized,
                 "steps_tokenized": steps_tokenized,
                 "answer_tokenized": answer_tokenized,
-                "pixel_values": pixel_values,
-                "num_patches": n_tiles,
+                "image": sample["image"],
                 "idx": sample["idx"],
                 "_skip": False,
             }
@@ -114,8 +110,7 @@ def _convert_instance_to_features(sample, start_id, latent_id, end_id, configs, 
         "labels": labels,
         "attention_mask": attention_mask,
         "position_ids": position_ids,
-        "pixel_values": sample["pixel_values"],
-        "num_patches": sample["num_patches"],
+        "image": sample["image"],
         "idx": sample["idx"],
     }
 
@@ -134,9 +129,12 @@ def get_question_latent_dataset_mm(
     tokenizer = configs.tokenizer  # injected later
 
     def process(sample):
-        return _convert_instance_to_features(sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker)
+        return _convert_instance_to_features(
+            sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker
+        )
 
-    return base_dataset_valid.map(process, remove_columns=list(base_dataset_valid.features), num_proc=2)
+    # Apply transform lazily to avoid storing large tensors in Arrow
+    return base_dataset_valid.with_transform(process)
 
 
 def get_cot_latent_dataset_mm(
@@ -153,9 +151,9 @@ def get_cot_latent_dataset_mm(
     tokenizer = configs.tokenizer
 
     def process(sample):
-        return _convert_instance_to_features(sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker)
+        return _convert_instance_to_features(
+            sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker
+        )
 
-    processed = base_dataset.map(process, remove_columns=list(base_dataset.features), num_proc=2)
-    if shuffle:
-        processed = processed.shuffle(seed=configs.seed)
-    return processed 
+    dataset = base_dataset.shuffle(seed=configs.seed) if shuffle else base_dataset
+    return dataset.with_transform(process) 

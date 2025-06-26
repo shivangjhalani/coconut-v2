@@ -294,7 +294,15 @@ def main():
 
     best_acc = 0
 
-    collator = CollatorClass(tokenizer, latent_id=latent_id, label_pad_token_id=-100)
+    if hasattr(configs, "multimodal") and configs.multimodal:
+        collator = CollatorClass(
+            tokenizer,
+            image_root=configs.image_dir,
+            latent_id=latent_id,
+            label_pad_token_id=-100,
+        )
+    else:
+        collator = CollatorClass(tokenizer, latent_id=latent_id, label_pad_token_id=-100)
 
     for epoch in range(configs.resume, configs.num_epochs):
 
