@@ -67,6 +67,8 @@ class MyCollatorMM(MyCollator):
 
         # Concatenate vision tensors along batch dimension (N_total, 3, H, W)
         batch["pixel_values"] = torch.cat(pixel_stacks, dim=0)
+        # image_flags: 1 per sample – InternVLChat expects this field (B,1)
+        batch["image_flags"] = torch.ones((len(num_patches), 1), dtype=torch.int32)
         if self.include_num_patches:
             batch["num_patches_list"] = torch.tensor(num_patches, dtype=torch.int32)
         return batch 
