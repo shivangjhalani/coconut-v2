@@ -1,2 +1,3 @@
 venv
-train-00000-of-00001-1028f23e353fbe3e.parquet
+*.parquet
+images
