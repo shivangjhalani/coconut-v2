@@ -23,7 +23,7 @@ def get_dataset_mm(
     img_root: str,
     max_size: int = 1000000000,
     image_size: int = 448,
-    num_proc: int = 2,
+    num_proc: int = 32,
  ):
     """Return a multimodal HF Dataset, building it if needed.
 
