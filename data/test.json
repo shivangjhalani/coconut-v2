@@ -1,0 +1,363 @@
+[
+  {
+    "image": "images/scienceqa_train/scienceqa_0000000.png",
+    "question": "Which of these states is farthest north? The choices are: (0) West Virginia, (1) Louisiana, (2) Arizona, (3) Oklahoma.",
+    "steps": [
+      "To find the answer, look at the compass rose.",
+      "Look at which way the north arrow is pointing.",
+      "West Virginia is farthest north."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000007.png",
+    "question": "Compare the average kinetic energies of the particles in each sample. Which sample has the higher temperature? The choices are: (0) neither; the samples have the same temperature, (1) sample A, (2) sample B.",
+    "steps": [
+      "The particles in both samples have the same average speed, but each particle in sample B has more mass than each particle in sample A.",
+      "So, the particles in sample B have a higher average kinetic energy than the particles in sample A.",
+      "Because the particles in sample B have the higher average kinetic energy, sample B must have the higher temperature."
+    ],
+    "answer": "2"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000009.png",
+    "question": "Which of these organisms contains matter that was once part of the phytoplankton? The choices are: (0) black rockfish, (1) sea otter.",
+    "steps": [
+      "Use the arrows to follow how matter moves through this food web.",
+      "For each answer choice, try to find a path of arrows that starts from the phytoplankton.",
+      "The only arrow pointing to the sea otter starts from the sea urchin.",
+      "The only arrow pointing to the sea urchin starts from the kelp.",
+      "No arrow points to the kelp.",
+      "So, in this food web, matter does not move from the phytoplankton to the sea otter.There are two paths matter can take from the phytoplankton to the plainfin midshipman: phytoplankton->plainfin midshipman.",
+      "phytoplankton->zooplankton->plainfin midshipman.",
+      "There is one path matter can take from the phytoplankton to the black rockfish: phytoplankton->zooplankton->black rockfish.",
+      "There is one path matter can take from the phytoplankton to the zooplankton: phytoplankton->zooplankton."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000010.png",
+    "question": "Which solution has a higher concentration of blue particles? The choices are: (0) neither; their concentrations are the same, (1) Solution B, (2) Solution A.",
+    "steps": [
+      "In Solution A and Solution B, the blue particles represent the solute.",
+      "To figure out which solution has a higher concentration of blue particles, look at both the number of blue particles and the volume of the solvent in each container.",
+      "Use the concentration formula to find the number of blue particles per milliliter.",
+      "Solution A and Solution B have the same number of blue particles per milliliter.",
+      "So, their concentrations are the same."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000011.png",
+    "question": "Think about the magnetic force between the magnets in each pair. Which of the following statements is true? The choices are: (0) The strength of the magnetic force is the same in both pairs., (1) The magnetic force is stronger in Pair 2., (2) The magnetic force is stronger in Pair 1..",
+    "steps": [
+      "Distance affects the strength of the magnetic force.",
+      "When magnets are closer together, the magnetic force between them is stronger.",
+      "The magnets in Pair 1 are closer together than the magnets in Pair 2.",
+      "So, the magnetic force is stronger in Pair 1 than in Pair 2."
+    ],
+    "answer": "2"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000013.png",
+    "question": "What does pollen help a plant do? The choices are: (0) make seeds, (1) grow bigger, (2) grow new leaves.",
+    "steps": [
+      "Pollen helps the flower make seeds.",
+      "After pollination, sperm cells from the pollen can combine with the eggs.",
+      "These fertilized eggs can grow into seeds.",
+      "Pollen does not help a plant grow bigger or grow leaves."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000016.png",
+    "question": "Which property matches this object? The choices are: (0) flexible, (1) sticky.",
+    "steps": [
+      "Look at the object.",
+      "Think about each property.",
+      "A flexible object can be folded or bent without breaking easily.",
+      "The helium balloons are flexible.",
+      "A sticky object can attach or stick to other things.",
+      "The helium balloons are not sticky."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000017.png",
+    "question": "What is the capital of South Carolina? The choices are: (0) Columbia, (1) Montgomery, (2) Charleston, (3) Harrisburg.",
+    "steps": [
+      "Columbia is the capital of South Carolina."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000023.png",
+    "question": "Which property do these three objects have in common? The choices are: (0) hard, (1) soft, (2) yellow.",
+    "steps": [
+      "Look at each object.",
+      "For each object, decide if it has that property.",
+      "A hard object does not change shape when pressed or squeezed.",
+      "None of the objects are hard.",
+      "Yellow is a color.",
+      "This color is yellow.",
+      "None of the objects are yellow.",
+      "A soft object changes shape when pressed or squeezed.",
+      "All three objects are soft.",
+      "The property that all three objects have in common is soft."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000025.png",
+    "question": "What is the capital of Colorado? The choices are: (0) Baton Rouge, (1) Denver, (2) Sacramento, (3) Spokane.",
+    "steps": [
+      "Denver is the capital of Colorado."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000026.png",
+    "question": "Select the fish below. The choices are: (0) black howler, (1) cardinalfish.",
+    "steps": [
+      "A cardinalfish is a fish.",
+      "It lives underwater.",
+      "It has fins, not limbs.",
+      "Cardinalfish often live near coral reefs.",
+      "They are nocturnal, which means that they are active mostly at night.",
+      "A black howler is a mammal.",
+      "It has hair and feeds its young milk.",
+      "Howler monkeys have loud calls, or howls.",
+      "Their calls can be heard over three miles away!"
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000028.png",
+    "question": "Complete the statement.\nTungsten carbide is (). The choices are: (0) an elementary substance, (1) a compound.",
+    "steps": [
+      "Use the model to determine whether tungsten carbide is an elementary substance or a compound.",
+      "Step 1: Interpret the model.",
+      ".",
+      "Use the legend to determine the chemical element represented by each color.",
+      "The colors and atomic symbols from the legend are shown in the table below.",
+      "The table also includes the names of the chemical elements represented in the model.",
+      "You can see from the model that tungsten carbide is composed of carbon atoms and tungsten atoms bonded together.",
+      "Step 2: Determine whether the substance is an elementary substance or a compound.",
+      "You know from Step 1 that tungsten carbide is composed of two chemical elements: carbon and tungsten.",
+      "Since tungsten carbide is composed of multiple chemical elements bonded together, tungsten carbide is a compound."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000029.png",
+    "question": "What can Maureen and Kendrick trade to each get what they want? The choices are: (0) Kendrick can trade his broccoli for Maureen's oranges., (1) Kendrick can trade his almonds for Maureen's tomatoes., (2) Maureen can trade her tomatoes for Kendrick's broccoli., (3) Maureen can trade her tomatoes for Kendrick's carrots..",
+    "steps": [
+      "Look at the table and images.",
+      "Maureen wants broccoli.",
+      "Kendrick wants tomatoes.",
+      "They can trade tomatoes for broccoli to both get what they want.",
+      "Trading other things would not help both people get more items they want."
+    ],
+    "answer": "2"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000032.png",
+    "question": "What is the expected ratio of offspring with a hairy body to offspring with a hairless body? Choose the most likely ratio. The choices are: (0) 3:1, (1) 4:0, (2) 2:2, (3) 0:4, (4) 1:3.",
+    "steps": [
+      "To determine how many boxes in the Punnett square represent offspring with a hairy body or a hairless body, consider whether each phenotype is the dominant or recessive allele's version of the body hair trait.",
+      "The question tells you that the B allele, which is for a hairy body, is dominant over the b allele, which is for a hairless body.",
+      "A hairy body is the dominant allele's version of the body hair trait.",
+      "A deer mouse with the dominant version of the body hair trait must have at least one dominant allele for the body hair gene.",
+      "So, offspring with a hairy body must have the genotype BB or Bb.",
+      "All 4 boxes in the Punnett square have the genotype BB or Bb.",
+      "A hairless body is the recessive allele's version of the body hair trait.",
+      "A deer mouse with the recessive version of the body hair trait must have only recessive alleles for the body hair gene.",
+      "So, offspring with a hairless body must have the genotype bb.",
+      "There are 0 boxes in the Punnett square with the genotype bb.",
+      "So, the expected ratio of offspring with a hairy body to offspring with a hairless body is 4:0.",
+      "This means that, based on the Punnett square, this cross will always produce offspring with a hairy body.",
+      "This cross is expected to never produce offspring with a hairless body."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000040.png",
+    "question": "Is a scarf a solid or a liquid? The choices are: (0) a solid, (1) a liquid.",
+    "steps": [
+      "A scarf is a solid.",
+      "You can fold a scarf.",
+      "But it will still have a size and shape of its own."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000041.png",
+    "question": "Which animal is also adapted for climbing trees? The choices are: (0) takin, (1) red-handed tamarin.",
+    "steps": [
+      "Look at the picture of the Sumatran orangutan.",
+      "The Sumatran orangutan has long fingers and toes.",
+      "It is adapted for climbing trees.",
+      "The Sumatran orangutan uses its long fingers and toes to hold on to branches while climbing.",
+      "Now look at each animal.",
+      "Figure out which animal has a similar adaptation.",
+      "The red-handed tamarin has long fingers and toes.",
+      "It is adapted for climbing trees.",
+      "The takin has four hoofed feet.",
+      "It is not adapted for climbing trees.",
+      "The takin uses its feet to walk and run."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000051.png",
+    "question": "Think about the magnetic force between the magnets in each pair. Which of the following statements is true? The choices are: (0) The magnitude of the magnetic force is smaller in Pair 2., (1) The magnitude of the magnetic force is smaller in Pair 1., (2) The magnitude of the magnetic force is the same in both pairs..",
+    "steps": [
+      "The magnets in Pair 2 attract.",
+      "The magnets in Pair 1 repel.",
+      "But whether the magnets attract or repel affects only the direction of the magnetic force.",
+      "It does not affect the magnitude of the magnetic force.",
+      "Distance affects the magnitude of the magnetic force.",
+      "When there is a greater distance between magnets, the magnitude of the magnetic force between them is smaller.",
+      "There is a greater distance between the magnets in Pair 2 than in Pair 1.",
+      "So, the magnitude of the magnetic force is smaller in Pair 2 than in Pair 1."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000052.png",
+    "question": "Is chalk a solid, a liquid, or a gas? The choices are: (0) a liquid, (1) a solid, (2) a gas.",
+    "steps": [
+      "Chalk is a solid.",
+      "You can easily break chalk into pieces.",
+      "But each piece will still have a size and shape of its own."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000057.png",
+    "question": "Which solution has a higher concentration of yellow particles? The choices are: (0) neither; their concentrations are the same, (1) Solution B, (2) Solution A.",
+    "steps": [
+      "In Solution A and Solution B, the yellow particles represent the solute.",
+      "To figure out which solution has a higher concentration of yellow particles, look at both the number of yellow particles and the volume of the solvent in each container.",
+      "Use the concentration formula to find the number of yellow particles per milliliter.",
+      "Solution B has more yellow particles per milliliter.",
+      "So, Solution B has a higher concentration of yellow particles."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000061.png",
+    "question": "Which animal's feet are also adapted for swimming? The choices are: (0) blue-footed booby, (1) tokay gecko.",
+    "steps": [
+      "Look at the picture of the Atlantic puffin.",
+      "The Atlantic puffin has webbed feet.",
+      "Its feet are adapted for swimming.",
+      "As it swims, the Atlantic puffin uses its webbed feet to push itself through water.",
+      "Now look at each animal.",
+      "Figure out which animal has a similar adaptation.",
+      "The blue-footed booby has webbed feet.",
+      "Its feet are adapted for swimming.",
+      "The tokay gecko has wide, sticky toes.",
+      "Its feet are not adapted for swimming.",
+      "The tokay gecko uses its feet to climb trees and walk on leaves."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000064.png",
+    "question": "Which solution has a higher concentration of green particles? The choices are: (0) Solution A, (1) Solution B, (2) neither; their concentrations are the same.",
+    "steps": [
+      "In Solution A and Solution B, the green particles represent the solute.",
+      "To figure out which solution has a higher concentration of green particles, look at both the number of green particles and the volume of the solvent in each container.",
+      "Use the concentration formula to find the number of green particles per milliliter.",
+      "Solution A has more green particles per milliliter.",
+      "So, Solution A has a higher concentration of green particles."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000066.png",
+    "question": "What is the capital of Washington? The choices are: (0) Santa Fe, (1) Seattle, (2) New Orleans, (3) Olympia.",
+    "steps": [
+      "Olympia is the capital of Washington."
+    ],
+    "answer": "3"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000067.png",
+    "question": "What is the capital of New York? The choices are: (0) Albany, (1) Lansing, (2) Buffalo, (3) Hartford.",
+    "steps": [
+      "Albany is the capital of New York."
+    ],
+    "answer": "0"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000070.png",
+    "question": "Which cones make pollen? The choices are: (0) pollinated cones, (1) male cones.",
+    "steps": [
+      "Male cones make pollen.",
+      "When pollen sticks to a female cone, the female cone becomes pollinated.",
+      "Pollinated cones do not produce pollen."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000071.png",
+    "question": "What can Debbie and Madelyn trade to each get what they want? The choices are: (0) Madelyn can trade her broccoli for Debbie's oranges., (1) Debbie can trade her tomatoes for Madelyn's broccoli., (2) Debbie can trade her tomatoes for Madelyn's sandwich., (3) Madelyn can trade her almonds for Debbie's tomatoes..",
+    "steps": [
+      "Debbie wanted broccoli in her lunch and Madelyn was hoping for tomatoes.",
+      "Look at the labeled part of the images.",
+      "Debbie has tomatoes.",
+      "Madelyn has broccoli.",
+      "They can trade tomatoes for broccoli to both be happier.",
+      "Trading other things would not help either person get more items they want."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000076.png",
+    "question": "Complete the statement.\nPalladium is (). The choices are: (0) a compound, (1) an elementary substance.",
+    "steps": [
+      "Use the model to determine whether palladium is an elementary substance or a compound.",
+      "Step 1: Interpret the model.",
+      "In the space-filling model shown above, all of the balls are the same color: .",
+      "The legend shows that dark blue represents the chemical element with the atomic symbol Pd.",
+      "So, the model shows you that palladium is composed of one chemical element.",
+      "Step 2: Determine whether the substance is an elementary substance or a compound.",
+      "You know from Step 1 that palladium is composed of only one chemical element.",
+      "So, palladium is an elementary substance."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000080.png",
+    "question": "In this food chain, the Mojave yucca is a producer. Why? The choices are: (0) It eats another living thing., (1) It makes its own food..",
+    "steps": [
+      "In this food chain, the Mojave yucca is a producer because it makes its own food.",
+      "The Mojave yucca uses carbon dioxide, water, and sunlight to make its own food."
+    ],
+    "answer": "1"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000084.png",
+    "question": "Which of these states is farthest east? The choices are: (0) Montana, (1) New Mexico, (2) Arkansas, (3) Nebraska.",
+    "steps": [
+      "To find the answer, look at the compass rose.",
+      "Look at which way the east arrow is pointing.",
+      "Arkansas is farthest east."
+    ],
+    "answer": "2"
+  },
+  {
+    "image": "images/scienceqa_train/scienceqa_0000085.png",
+    "question": "Will these magnets attract or repel each other? The choices are: (0) repel, (1) attract.",
+    "steps": [
+      "Will these magnets attract or repel?",
+      "To find out, look at which poles are closest to each other.",
+      "The north pole of one magnet is closest to the south pole of the other magnet.",
+      "Poles that are different attract.",
+      "So, these magnets will attract each other."
+    ],
+    "answer": "1"
+  }
+]

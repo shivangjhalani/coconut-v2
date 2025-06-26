@@ -1,9 +1,13 @@
 import math
 from typing import List, Tuple
-from PIL import Image
+from PIL import Image, ImageFile
 import torch
 import torchvision.transforms as T
 from torchvision.transforms.functional import InterpolationMode
+
+# Handle edge-case images safely
+ImageFile.LOAD_TRUNCATED_IMAGES = True  # skip over corrupt/truncated files instead of crashing C loader
+Image.MAX_IMAGE_PIXELS = None  # disable DecompressionBombError for very large images
 
 # Default statistics used by InternVL
 IMAGENET_MEAN: Tuple[float, float, float] = (0.485, 0.456, 0.406)
