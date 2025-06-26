@@ -2,6 +2,17 @@
 
 > **Scope** – turn the current single-modal (text-only) repo into a training pipeline that can fine-tune the open-source MLLM [OpenGVLab/InternVL3-1B-Pretrained](https://huggingface.co/OpenGVLab/InternVL3-1B-Pretrained) with the continuous-latent-scratch-pad (COCONUT) algorithm.
 
+## Commands
+python preprocessing/scienceqa_to_json.py \
+       data/train-00000-of-00001-1028f23e353fbe3e.parquet
+
+
+python preprocessing/scienceqa_to_coconut.py \
+       data/train-00000-of-00001-1028f23e353fbe3e.jsonl \
+       --output data/scienceqa_coconut.json \
+       --image-dir data/images/scienceqa
+
+
 ---
 
 ## 1  Dependencies & Environments
