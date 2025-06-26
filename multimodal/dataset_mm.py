@@ -133,8 +133,12 @@ def get_question_latent_dataset_mm(
             sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker
         )
 
-    # Apply transform lazily to avoid storing large tensors in Arrow
-    return base_dataset_valid.with_transform(process)
+    # Use map to materialise a consistent table (small now since we keep no image tensors)
+    return base_dataset_valid.map(
+        process,
+        remove_columns=list(base_dataset_valid.features),
+        num_proc=2,
+    )
 
 
 def get_cot_latent_dataset_mm(
@@ -156,4 +160,8 @@ def get_cot_latent_dataset_mm(
         )
 
     dataset = base_dataset.shuffle(seed=configs.seed) if shuffle else base_dataset
-    return dataset.with_transform(process) 
+    return dataset.map(
+        process,
+        remove_columns=list(base_dataset.features),
+        num_proc=2,
+    ) 
