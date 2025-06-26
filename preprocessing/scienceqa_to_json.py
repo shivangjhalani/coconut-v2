@@ -1,6 +1,7 @@
 import argparse
 import os
 from typing import Optional
+import base64
 
 import pandas as pd  # type: ignore
 
@@ -13,6 +14,16 @@ def parquet_to_json(parquet_path: str, output_path: Optional[str] = None):
     """
     # Read parquet with pandas (pyarrow engine)
     df = pd.read_parquet(parquet_path, engine="pyarrow")
+
+    # Re-encode any binary cells (e.g., PNG bytes) to base64 strings so that
+    # pandas → json conversion does not choke on non-UTF8 data.
+
+    def _encode_bytes(x):
+        if isinstance(x, (bytes, bytearray)):
+            return base64.b64encode(x).decode("ascii")
+        return x
+
+    df = df.applymap(_encode_bytes)
 
     # Determine output path
     if output_path is None:
