@@ -65,8 +65,8 @@ class MyCollatorMM(MyCollator):
         # Text padding via parent collator (this will also remove vision keys already popped)
         batch = super().__call__(features, return_tensors=return_tensors)
 
-        # Concatenate vision tensors along batch dimension (N_total, 3, H, W)
-        batch["pixel_values"] = torch.cat(pixel_stacks, dim=0)
+        # Concatenate and cast vision tensors to bfloat16 (InternVL expects bf16/fp16)
+        batch["pixel_values"] = torch.cat(pixel_stacks, dim=0).to(torch.bfloat16)
         # image_flags: 1 per sample – InternVLChat expects this field (B,1)
         batch["image_flags"] = torch.ones((len(num_patches), 1), dtype=torch.int32)
         if self.include_num_patches:
