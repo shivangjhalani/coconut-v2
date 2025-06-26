@@ -1,6 +1,8 @@
+# need 4 gpus
+
 project: coconut
 save_path: YOUR_PATH_TO_SAVE_THE_MODEL
-name: scienceqa-coconut
+name: gsm-coconut
 
 only_eval: False
 
@@ -16,21 +18,17 @@ pad_latent_to_max: True
 
 save_only_improve: False
 uniform_prob: 0.0
-
-model_id: OpenGVLab/InternVL3-1B-Pretrained
-# path to *CoT* checkpoint produced by scienceqa-cot run.
+model_id: openai-community/gpt2
 load_model_path: YOUR_PATH_TO_COT_CHECKPOINT
-multimodal: True
-image_dir: data/images/
 seed: 0
 resume: 3
 bf16: False
-train_path: data/scienceqa_train.json
-val_path: data/scienceqa_valid.json
+train_path: data/gsm_train.json
+val_path: data/gsm_valid.json
 reset_optimizer: True
-batch_size_training: 8
+batch_size_training: 32
 debug: False
 gradient_accumulation_steps: 1
 num_epochs: 25
-lr: !!float "1e-5"
-weight_decay: 0.01 
+lr: !!float "1e-4"
+weight_decay: 0.01
