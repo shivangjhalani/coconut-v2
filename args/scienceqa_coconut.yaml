@@ -25,8 +25,10 @@ image_dir: data
 seed: 0
 resume: 3
 bf16: False
-train_path: data/scienceqa_train.json
-val_path: data/scienceqa_valid.json
+# train_path: data/scienceqa_train.json
+# val_path: data/scienceqa_valid.json
+train_path: data/cache/scienceqa_train      # the folder you just saved
+val_path:   data/cache/scienceqa_valid
 reset_optimizer: True
 batch_size_training: 8
 debug: False
