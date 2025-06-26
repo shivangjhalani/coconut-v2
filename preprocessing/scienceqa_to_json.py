@@ -2,6 +2,7 @@ import argparse
 import os
 from typing import Optional
 import base64
+import json
 
 import pandas as pd  # type: ignore
 
@@ -15,15 +16,18 @@ def parquet_to_json(parquet_path: str, output_path: Optional[str] = None):
     # Read parquet with pandas (pyarrow engine)
     df = pd.read_parquet(parquet_path, engine="pyarrow")
 
-    # Re-encode any binary cells (e.g., PNG bytes) to base64 strings so that
-    # pandas → json conversion does not choke on non-UTF8 data.
+    # Helper: recursively convert bytes → base64 ascii strings so JSON serialization
+    # never encounters raw binary.
+    def _encode(obj):
+        if isinstance(obj, (bytes, bytearray)):
+            return base64.b64encode(obj).decode("ascii")
+        if isinstance(obj, dict):
+            return {k: _encode(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [_encode(v) for v in obj]
+        return obj
 
-    def _encode_bytes(x):
-        if isinstance(x, (bytes, bytearray)):
-            return base64.b64encode(x).decode("ascii")
-        return x
-
-    df = df.applymap(_encode_bytes)
+    records = [_encode(rec) for rec in df.to_dict(orient="records")]
 
     # Determine output path
     if output_path is None:
@@ -33,8 +37,12 @@ def parquet_to_json(parquet_path: str, output_path: Optional[str] = None):
     # Ensure the target directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    # Write out – one json object per line
-    df.to_json(output_path, orient="records", lines=True, force_ascii=False)
+    # Write out – one json object per line using standard json library (robust to
+    # python objects we pre-cleaned above).
+    with open(output_path, "w", encoding="utf-8") as f:
+        for rec in records:
+            json.dump(rec, f, ensure_ascii=False)
+            f.write("\n")
 
     print(f"[scienceqa_to_json] Wrote {len(df)} records → {output_path}")
 
