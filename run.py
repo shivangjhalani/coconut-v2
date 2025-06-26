@@ -15,17 +15,8 @@ from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
+from transformers.models.llama.modeling_llama import LlamaDecoderLayer
 from transformers.models.gpt2.modeling_gpt2 import GPT2Block
-
-# Conditional import to avoid flash attention issues when using GPT-2
-try:
-    from transformers.models.llama.modeling_llama import LlamaDecoderLayer
-    LLAMA_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Could not import LlamaDecoderLayer: {e}")
-    print("FSDP will use no auto-wrap policy (equivalent to DDP for GPT-2)")
-    LlamaDecoderLayer = None
-    LLAMA_AVAILABLE = False
 
 from coconut import Coconut
 from dataset import (
@@ -180,19 +171,13 @@ def main():
     print(f"Running FSDP on rank = {rank}, world size = {world_size}")
     model = model.to(rank)
 
-    # Configure auto-wrap policy based on available model types
-    if LLAMA_AVAILABLE and LlamaDecoderLayer is not None:
-        llama_auto_wrap_policy = functools.partial(
-            transformer_auto_wrap_policy,
-            transformer_layer_cls={
-                # GPT2Block,       # for GPT2, we don't need to shard layers (it becomes DDP)
-                LlamaDecoderLayer  # only shard llama's layers.
-            },
-        )
-    else:
-        # For GPT-2 models or when Llama is not available, use no auto-wrap policy
-        # This effectively makes FSDP behave like DDP for smaller models
-        llama_auto_wrap_policy = None
+    llama_auto_wrap_policy = functools.partial(
+        transformer_auto_wrap_policy,
+        transformer_layer_cls={
+            # GPT2Block,       # for GPT2, we don't need to shard layers (it becomes DDP)
+            LlamaDecoderLayer  # only shard llama's layers.
+        },
+    )
 
     if configs.bf16:
         model.to(torch.bfloat16)
