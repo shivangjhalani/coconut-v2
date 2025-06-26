@@ -3,10 +3,11 @@ import itertools
 import random
 from dataclasses import dataclass
 from typing import Optional
+import os
 
 import torch
 import torch.distributed as dist
-from datasets import Dataset
+from datasets import Dataset, load_from_disk
 from transformers import PreTrainedTokenizerBase
 from transformers.data.data_collator import pad_without_fast_tokenizer_warning
 
@@ -14,7 +15,19 @@ from multimodal.transforms import load_image
 
 
 def get_dataset_mm(path, tokenizer, img_root: str, max_size: int = 1000000000, image_size: int = 448):
-    """Read JSONL with an additional `image` field and prepare HF Dataset with pixel tensors."""
+    """Return a multimodal HF Dataset, building it if needed.
+
+    Workflow:
+    1. If ``path`` points to a directory containing a previously saved dataset
+       (created via ``datasets.save_to_disk``), we load it directly → instant load.
+    2. Else we assume ``path`` is a JSON file created by *scienceqa_to_coconut.py*
+       and run the expensive image-tiling + tokenisation pipeline, then return the
+       in-memory dataset (caller can later save it).
+    """
+
+    # Fast path: cached dataset dir
+    if os.path.isdir(path) and os.path.exists(os.path.join(path, "dataset_info.json")):
+        return load_from_disk(path)
 
     def tokenize_sample(sample):
         # text tokenisation identical to original code
