@@ -47,7 +47,7 @@ def get_dataset(path, tokenizer, max_size=1000000000):
         if dist.get_rank() == 0:
             processed_dataset = [
                 dataset.map(
-                    tokenize_sample, remove_columns=list(dataset.features), num_proc=32
+                    tokenize_sample, remove_columns=list(dataset.features), num_proc=8
                 )
             ]
         else:
@@ -57,7 +57,7 @@ def get_dataset(path, tokenizer, max_size=1000000000):
 
     else:
         dataset = dataset.map(
-            tokenize_sample, remove_columns=list(dataset.features), num_proc=32
+            tokenize_sample, remove_columns=list(dataset.features), num_proc=8
         )
 
     # verify
@@ -223,7 +223,7 @@ def get_question_latent_dataset(
         }
 
     return base_dataset_valid.map(
-        process_dataset, remove_columns=list(base_dataset_valid.features), num_proc=32
+        process_dataset, remove_columns=list(base_dataset_valid.features), num_proc=8
     )
 
 
@@ -304,7 +304,7 @@ def get_cot_latent_dataset(
     if torch.cuda.device_count() > 1:
         if dist.get_rank() == 0:
             processed_dataset = base_dataset.map(
-                process_dataset, remove_columns=list(base_dataset.features), num_proc=32
+                process_dataset, remove_columns=list(base_dataset.features), num_proc=8
             )
             if shuffle:
                 processed_dataset = processed_dataset.shuffle()
@@ -316,7 +316,7 @@ def get_cot_latent_dataset(
 
     else:
         processed_dataset = base_dataset.map(
-            process_dataset, remove_columns=list(base_dataset.features), num_proc=32
+            process_dataset, remove_columns=list(base_dataset.features), num_proc=8
         )
         if shuffle:
             processed_dataset = processed_dataset.shuffle()

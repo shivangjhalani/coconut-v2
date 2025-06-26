@@ -14,7 +14,14 @@ from transformers.data.data_collator import pad_without_fast_tokenizer_warning
 from multimodal.transforms import load_image
 
 
-def get_dataset_mm(path, tokenizer, img_root: str, max_size: int = 1000000000, image_size: int = 448):
+def get_dataset_mm(
+    path,
+    tokenizer,
+    img_root: str,
+    max_size: int = 1000000000,
+    image_size: int = 448,
+    num_proc: int = 8,
+):
     """Return a multimodal HF Dataset, building it if needed.
 
     Workflow:
@@ -69,17 +76,17 @@ def get_dataset_mm(path, tokenizer, img_root: str, max_size: int = 1000000000, i
     if torch.cuda.device_count() > 1:
         if dist.get_rank() == 0:
             processed_dataset = [
-                dataset.map(tokenize_sample, remove_columns=list(dataset.features), num_proc=32)
+                dataset.map(tokenize_sample, remove_columns=list(dataset.features), num_proc=num_proc)
             ]
         else:
             processed_dataset = [None]
         dist.broadcast_object_list(processed_dataset, src=0)
         dataset = processed_dataset[0]
     else:
-        dataset = dataset.map(tokenize_sample, remove_columns=list(dataset.features), num_proc=32)
+        dataset = dataset.map(tokenize_sample, remove_columns=list(dataset.features), num_proc=num_proc)
 
     # drop bad records
-    dataset = dataset.filter(lambda example: not example["_skip"], num_proc=32)
+    dataset = dataset.filter(lambda example: not example["_skip"], num_proc=num_proc)
 
     return dataset
 
@@ -126,7 +133,7 @@ def get_question_latent_dataset_mm(
     def process(sample):
         return _convert_instance_to_features(sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker)
 
-    return base_dataset_valid.map(process, remove_columns=list(base_dataset_valid.features), num_proc=32)
+    return base_dataset_valid.map(process, remove_columns=list(base_dataset_valid.features), num_proc=8)
 
 
 def get_cot_latent_dataset_mm(
@@ -145,7 +152,7 @@ def get_cot_latent_dataset_mm(
     def process(sample):
         return _convert_instance_to_features(sample, start_id, latent_id, end_id, configs, tokenizer, no_special_marker)
 
-    processed = base_dataset.map(process, remove_columns=list(base_dataset.features), num_proc=32)
+    processed = base_dataset.map(process, remove_columns=list(base_dataset.features), num_proc=8)
     if shuffle:
         processed = processed.shuffle(seed=configs.seed)
     return processed 
